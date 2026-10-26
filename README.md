@@ -2,7 +2,7 @@
 
 高级软件开发技术 · Lab1 Phase 1：用 TypeScript 和面向对象设计实现 SVG 命令行编辑器。
 
-**当前阶段：M2 图形树内核已完成，19 项测试通过；下一步为 Command 与历史，CLI 尚未实现。**
+**当前阶段：M3 Command 与历史已完成，32 项测试通过；下一步接入 CLI 和真实 SVG 文件。**
 
 - 作业原文：[phase_cli_1.md](doc/requirements/phase_cli_1.md)
 - 作业要求的提交文档：[doc/README.md](doc/README.md)
