@@ -22,7 +22,7 @@ export class CommandHistory {
     const command = this.#undo.at(-1);
     if (!command) throw new Error('nothing to undo');
     const document = command.undo(); this.#undo.pop(); this.#redo.push(command);
-    return { document, message: `undone: ${command.summary}` };
+    return { document, message: `undone: ${command.restoredSummary(document)}` };
   }
 
   redo(): HistoryResult {

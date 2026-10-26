@@ -8,7 +8,7 @@ create/group 必须显式给 id；导入时缺 id 才补号，并预先避开整
 
 ## 已实现的 SVG 能力
 
-- 根 width/height、viewBox、version、preserveAspectRatio；数字或 px 长度，缺尺寸时优先采用 viewBox 尺寸，否则为 800×600。
+- 合法 SVG 命名空间；根 width/height、viewBox、version、preserveAspectRatio；数字或 px 长度，缺尺寸时优先采用 viewBox 尺寸，否则为 800×600。
 - 六种元素的几何属性、文本、父子层级与兄弟顺序。text 的内容写成子文本。
 - 公共 fill、stroke、stroke-width，以及字号、字体、text-anchor、透明度等支持的展示属性；data-/aria- 元数据和 xml:space。
 - translate、scale、rotate（可带中心）、matrix、skewX、skewY 及它们的嵌套组合。导出统一为等价 matrix，不要求原 XML 排版或变换字符串不变。

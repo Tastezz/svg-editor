@@ -1,5 +1,6 @@
 @startuml
-title Lab1 Phase 1 SVG Editor - Planned Architecture
+!pragma layout smetana
+title Lab1 Phase 1 SVG Editor - Implemented Architecture
 skinparam componentStyle rectangle
 left to right direction
 
@@ -15,7 +16,7 @@ Main --> Infrastructure
 Cli --> Application
 Cli --> Domain : 公开查询能力
 Application --> Domain
-Infrastructure --> Application : 实现 ports
+Infrastructure --> Application : 仅依赖 ports
 Infrastructure --> Domain
 
 note bottom of Domain

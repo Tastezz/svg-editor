@@ -45,7 +45,8 @@ test('snapshot undo avoids inverse floating arithmetic and remains reusable', ()
   session.execute(new CreateCommand(factory,'rect','r',['.1','.2','1','1']));
   session.execute(new MoveCommand('r',.2,.1));
   for (let i=0;i<3;i++) {
-    session.undo(); assert.equal(session.document.find('r').attributes['x'],'0.1');
+    const feedback = session.undo(); assert.equal(session.document.find('r').attributes['x'],'0.1');
+    assert.match(feedback,/x=0\.1 y=0\.2/); assert.doesNotMatch(feedback,/x=0\.30000000000000004/);
     session.redo(); assert.equal(session.document.find('r').attributes['x'],String(.1+.2));
   }
 });

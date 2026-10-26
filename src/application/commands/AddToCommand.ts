@@ -2,7 +2,7 @@ import { EditCommand } from './EditCommand.js';
 import type { SvgDocument } from '../../domain/model/SvgDocument.js';
 
 export class AddToCommand extends EditCommand {
-  constructor(private readonly groupId: string, private readonly id: string) { super(); }
+  constructor(private readonly groupId: string, private readonly id: string) { super([id]); }
   protected override apply(document: SvgDocument): string {
     const label = document.find(this.id).label; document.addTo(this.groupId,this.id);
     return `${label} added to g#${this.groupId}`;

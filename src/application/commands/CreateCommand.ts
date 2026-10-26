@@ -6,7 +6,7 @@ export class CreateCommand extends EditCommand {
   readonly #parameters: readonly string[];
   constructor(private readonly factory: ShapeFactory, private readonly type: string,
     private readonly id: string, parameters: readonly string[], private readonly parentId?: string) {
-    super(); this.#parameters = [...parameters];
+    super([id]); this.#parameters = [...parameters];
   }
   protected override apply(document: SvgDocument): string {
     const shape = this.factory.create(this.type,this.id,this.#parameters);

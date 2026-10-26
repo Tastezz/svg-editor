@@ -129,7 +129,7 @@ export class SvgCodec implements DocumentCodec {
   }
 
   private checkNamespace(element: Element): void {
-    if (element.namespaceURI && element.namespaceURI !== SvgCodec.namespace) throw new Error('unsupported SVG namespace');
+    if (element.namespaceURI !== SvgCodec.namespace) throw new Error('unsupported SVG namespace');
   }
   private checkInstructions(node: Node): void {
     for (let index=0;index<(node.childNodes?.length ?? 0);index++) {

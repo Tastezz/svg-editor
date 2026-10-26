@@ -2,7 +2,7 @@
 
 高级软件开发技术 · Lab1 Phase 1：用 TypeScript 和面向对象设计实现 SVG 命令行编辑器。
 
-**当前阶段：CLI 与真实 SVG 读写已实现，54 项测试与架构检查通过；正在做浏览器验收和干净检出复现。尚未创建 final 标签。**
+**当前阶段：CLI 与真实 SVG 读写已实现，55 项测试与架构检查通过；浏览器预览已检查，正在做干净检出复现。尚未创建 final 标签。**
 
 - 作业原文：[phase_cli_1.md](doc/requirements/phase_cli_1.md)
 - 作业要求的提交文档：[doc/README.md](doc/README.md)
@@ -11,6 +11,7 @@
 - PlantUML 架构图：[doc/architecture.puml](doc/architecture.puml)
 - 学生待办与交接：[doc/STUDENT_HANDOFF.md](doc/STUDENT_HANDOFF.md)
 - 实施决策与修订：[doc/DECISIONS.md](doc/DECISIONS.md)
+- 验证记录：[doc/VALIDATION.md](doc/VALIDATION.md)
 
 ## 项目范围
 

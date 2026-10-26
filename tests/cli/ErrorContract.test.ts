@@ -1,0 +1,32 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { EditorSession } from '../../src/application/EditorSession.js';
+import { ShapeFactory } from '../../src/application/factories/ShapeFactory.js';
+import { CommandDispatcher } from '../../src/cli/CommandDispatcher.js';
+import { MemoryDocumentStore } from '../support/MemoryDocumentStore.js';
+import { MemoryDocumentCodec } from '../support/MemoryDocumentCodec.js';
+
+test('Phase 1 error messages match the assignment contract verbatim', async () => {
+  const store = new MemoryDocumentStore(), session = new EditorSession(store,new MemoryDocumentCodec());
+  const dispatcher = new CommandDispatcher(session,new ShapeFactory());
+  const fails = async (line: string, message: string) => assert.rejects(dispatcher.dispatch(line),{message});
+  await fails('move r1 1 2',"no document. use 'init' or 'read' first");
+  await dispatcher.dispatch('init'); await dispatcher.dispatch('create rect r1 0 0 1 1');
+  await fails('create rect r1 0 0 1 1','id already exists: r1');
+  await fails('move r9 1 2','no such shape: r9');
+  await fails('create rect new 0 0 1 1 in node9','no such container: node9');
+  await fails('create rect new 0 0 1 1 in r1','not a container: r1');
+  await fails('create hexagon h','unknown shape type: hexagon (is the plugin loaded?)');
+  await fails('create box n1 1 2 3 4 "title"','unknown shape type: box (is the plugin loaded?)');
+  await dispatcher.dispatch('create g scene'); await dispatcher.dispatch('create circle c1 0 0 1 in scene');
+  await fails('group bad c1 scene','cannot group a container into its own descendant: scene');
+  await fails('ungroup scene','cannot ungroup top-level container: scene');
+  await fails('scale r1 0','scale factor must be positive');
+  await fails('scale r1 -1','scale factor must be positive');
+  await fails('set r1 label value','unknown attribute: label');
+  await fails('read a.svg','cannot read file: a.svg');
+  store.failWrites(true); await fails('save a.svg','cannot write file: a.svg');
+  store.failWrites(false); await dispatcher.dispatch('save a.svg');
+  await fails('undo','undo not allowed after io command');
+  await fails('redo','undo not allowed after io command');
+});

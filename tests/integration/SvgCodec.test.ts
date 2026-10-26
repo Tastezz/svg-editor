@@ -73,7 +73,8 @@ test('malformed or unsupported SVG fails explicitly instead of losing content', 
     svg('<rect id="r" onclick="alert(1)"/>'), svg('<text id="t"><tspan>mixed</tspan></text>'),
     svg('<rect id="r" class="external-style"/>'), svg('<rect id="r" x="NaN"/>'),
     '<!DOCTYPE svg><svg/>', '<?xml-stylesheet href="x.css"?><svg/>',
-    '<svg xmlns="https://example.invalid/not-svg"/>', svg('<rect id="r"/>','viewBox="0 0 0 20"'),
+    '<svg xmlns="https://example.invalid/not-svg"/>', svg('<rect xmlns="" id="r"/>'),
+    svg('<rect id="r"/>','viewBox="0 0 0 20"'),
     svg('<rect id="r"/>','width="100%"'), svg('<rect id="r" __proto__="unsupported"/>'),
   ]) assert.throws(()=>codec.decode(source),source);
 });
