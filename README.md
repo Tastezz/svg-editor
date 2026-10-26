@@ -2,7 +2,7 @@
 
 高级软件开发技术 · Lab1 Phase 1：用 TypeScript 和面向对象设计实现 SVG 命令行编辑器。
 
-**当前阶段：M3 Command 与历史已完成，32 项测试通过；下一步接入 CLI 和真实 SVG 文件。**
+**当前阶段：CLI 与真实 SVG 读写已实现，54 项测试与架构检查通过；正在做浏览器验收和干净检出复现。尚未创建 final 标签。**
 
 - 作业原文：[phase_cli_1.md](doc/requirements/phase_cli_1.md)
 - 作业要求的提交文档：[doc/README.md](doc/README.md)
@@ -27,11 +27,16 @@
 ```sh
 npm ci
 npm run typecheck
+npm run check:architecture
 npm run build
 npm test
+npm run cli
+npm run demo
 ```
 
-`npm run cli` 入口已预留，目前只提示仍在开发，不提供图形编辑；M4 完成后更新本节。
+`npm run cli` 进入 `svg>` 交互环境，输入 `help` 查看语法，Ctrl-D 退出。也可回放脚本：`node dist/src/main.js < examples/flowchart.commands`。`npm run demo` 会准备输出目录并生成 `.artifacts/flowchart.svg`。
+
+正常结果与导入警告输出到 stdout，错误以 `error:` 开头输出到 stderr；单条错误不终止会话。外部 SVG 的支持范围与暂定语义见 [COMPATIBILITY.md](doc/COMPATIBILITY.md)。
 
 ## Git 与交付
 

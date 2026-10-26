@@ -6,9 +6,11 @@
   "main": "dist/src/main.js",
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "check:architecture": "node scripts/check-architecture.mjs",
     "build": "tsc",
     "test": "npm run build && node --test --test-reporter spec 'dist/tests/**/*.test.js'",
-    "cli": "npm run build --silent && node dist/src/main.js"
+    "cli": "npm run build --silent && node dist/src/main.js",
+    "demo": "npm run build --silent && node scripts/run-demo.mjs"
   },
   "repository": {
     "type": "git",

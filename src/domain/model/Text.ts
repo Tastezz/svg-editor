@@ -1,10 +1,11 @@
 import { Shape } from './Shape.js';
 import { Numeric } from './Numeric.js';
+import { XmlValue } from './XmlValue.js';
 
 export class Text extends Shape {
   #x: number; #y: number; #content: string;
   constructor(id: string, x: number, y: number, content: string) {
-    super(id); this.#x = Numeric.finite(x); this.#y = Numeric.finite(y); this.#content = content;
+    super(id); this.#x = Numeric.finite(x); this.#y = Numeric.finite(y); this.#content = XmlValue.validate(content);
   }
   override get tag(): string { return 'text'; }
   override get textContent(): string { return this.#content; }
@@ -20,7 +21,7 @@ export class Text extends Shape {
     this.#x = x; this.#y = y;
   }
   protected override setGeometry(attribute: string, value: string): boolean {
-    if (attribute === 'text') { this.#content = value; return true; }
+    if (attribute === 'text') { this.#content = XmlValue.validate(value); return true; }
     if (!Object.hasOwn(this.geometry(), attribute)) return false;
     const number = Numeric.parse(value);
     if (attribute === 'x') this.#x = number;

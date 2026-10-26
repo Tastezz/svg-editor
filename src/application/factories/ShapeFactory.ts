@@ -6,7 +6,8 @@ import { Text } from '../../domain/model/Text.js';
 import { Group } from '../../domain/model/Group.js';
 import { Numeric } from '../../domain/model/Numeric.js';
 import type { Shape } from '../../domain/model/Shape.js';
-import type { ShapeInput } from './ShapeInput.js';
+import type { ShapeInput } from '../ports/ShapeInput.js';
+import type { ShapeReader } from '../ports/ShapeReader.js';
 
 interface ShapeProvider {
   readonly geometry: readonly string[];
@@ -15,7 +16,7 @@ interface ShapeProvider {
 }
 
 /** D2: the only shape-type dispatch. Replace built-ins with providers in a later phase. */
-export class ShapeFactory {
+export class ShapeFactory implements ShapeReader {
   readonly #providers = new Map<string, ShapeProvider>([
     ['rect', { geometry: ['x','y','width','height'], text: false, create: (id,p) => {
       this.count(p,4,5); return this.styled(new Rect(id,...this.numbers(p,4) as [number,number,number,number]),'fill',p[4]);

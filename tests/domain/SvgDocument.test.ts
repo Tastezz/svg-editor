@@ -96,3 +96,13 @@ test('batch insertion preflights descendant duplicates and canvas validation is 
   assert.throws(()=>doc.resize(100,-1)); assert.equal(doc.width,800); assert.equal(doc.height,600);
   assert.throws(()=>doc.setViewBox([0,0,0,100])); assert.deepEqual(doc.viewBox,[0,0,800,600]);
 });
+
+test('shared singular ancestor does not unnecessarily prevent grouping or reparenting', () => {
+  const doc = new SvgDocument(), common = new Group('common'), left = new Group('left'), right = new Group('right');
+  common.setTransform(new Transform(0,0,0,0,10,20)); left.move(20,30); right.move(100,200);
+  doc.add(common); doc.add(left,'common'); doc.add(right,'common');
+  doc.add(new Rect('a',1,2,3,4),'left'); doc.add(new Rect('b',3,4,5,6),'left');
+  doc.addTo('right','a'); assert.deepEqual(doc.find('a').worldTransform().point(1,2),[10,20]);
+  doc.group('pair',['b','a']); assert.equal(doc.find('pair').parent!.id,'common');
+  doc.ungroup('pair'); assert.equal(doc.find('a').parent!.id,'common'); doc.validate();
+});

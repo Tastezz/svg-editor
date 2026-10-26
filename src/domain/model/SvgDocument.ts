@@ -2,12 +2,15 @@ import { Group } from './Group.js';
 import { Numeric } from './Numeric.js';
 import { Shape } from './Shape.js';
 import type { ShapeElement } from '../contracts/ShapeElement.js';
+import { XmlValue } from './XmlValue.js';
 
 export class SvgDocument {
   #width: number; #height: number;
   #viewBox: readonly [number, number, number, number];
   #root = new Group('__canvas__', true);
   #index = new Map<string, Shape>();
+  #svgId: string | null = null;
+  #rootMetadata = new Map<string,string>();
 
   constructor(width = 800, height = 600) {
     this.#width = Numeric.positive(width); this.#height = Numeric.positive(height);
@@ -19,6 +22,18 @@ export class SvgDocument {
   get root(): Group { return this.#root; }
   get size(): number { return this.#index.size; }
   get viewBox(): readonly [number, number, number, number] { return [...this.#viewBox]; }
+
+  setSvgId(id: string): void {
+    Shape.validateId(id);
+    if (this.has(id)) throw new Error(`id already exists: ${id}`);
+    this.#svgId = id;
+  }
+
+  setRootMetadata(name: string, value: string): void {
+    XmlValue.validate(value);
+    if (!['version','preserveAspectRatio'].includes(name)) throw new Error(`unsupported SVG root attribute: ${name}`);
+    this.#rootMetadata.set(name,value);
+  }
 
   resize(width: number, height: number): void {
     Numeric.positive(width); Numeric.positive(height);
@@ -49,7 +64,7 @@ export class SvgDocument {
     const parent = this.container(parentId);
     const incoming = new Set<string>();
     for (const node of this.walk(shape)) {
-      if (this.has(node.id) || incoming.has(node.id)) throw new Error(`id already exists: ${node.id}`);
+      if (this.has(node.id) || incoming.has(node.id) || node.id === this.#svgId) throw new Error(`id already exists: ${node.id}`);
       incoming.add(node.id);
     }
     if (shape.parent) throw new Error(`shape already belongs to a container: ${shape.id}`);
@@ -68,7 +83,9 @@ export class SvgDocument {
     if (target === shape || shape.isAncestorOf(target)) {
       throw new Error(`cannot move a container into its own descendant: ${shape.id}`);
     }
-    const transform = target.worldTransform().inverse().multiply(shape.worldTransform());
+    let ancestor = target;
+    while (!ancestor.isAncestorOf(shape)) ancestor = ancestor.parent!;
+    const transform = target.relativeTransformTo(ancestor).inverse().multiply(shape.relativeTransformTo(ancestor));
     target.insert(shape);
     shape.setTransform(transform);
     this.validate();
@@ -76,7 +93,7 @@ export class SvgDocument {
 
   group(id: string, ids: readonly string[]): Group {
     Shape.validateId(id);
-    if (this.has(id)) throw new Error(`id already exists: ${id}`);
+    if (this.has(id) || id === this.#svgId) throw new Error(`id already exists: ${id}`);
     if (ids.length < 2) throw new Error('group requires at least two shapes');
     if (new Set(ids).size !== ids.length) throw new Error('cannot group the same shape twice');
     const selected = ids.map(selectedId => this.find(selectedId));
@@ -94,8 +111,7 @@ export class SvgDocument {
       return shape;
     });
     const insertion = Math.min(...branches.map(shape => parent.indexOf(shape)));
-    const inverse = parent.worldTransform().inverse();
-    const transforms = selected.map(shape => inverse.multiply(shape.worldTransform()));
+    const transforms = selected.map(shape => shape.relativeTransformTo(parent));
     const group = new Group(id);
     parent.insert(group, insertion);
     selected.forEach((shape, index) => {
@@ -109,8 +125,7 @@ export class SvgDocument {
     const group = this.find(id).asContainer(), parent = group.parent!;
     if (parent.isRoot) throw new Error(`cannot ungroup top-level container: ${id}`);
     const children = group.children, index = parent.indexOf(group);
-    const inverse = parent.worldTransform().inverse();
-    const transforms = children.map(shape => inverse.multiply(shape.worldTransform()));
+    const transforms = children.map(shape => shape.relativeTransformTo(parent));
     children.forEach((shape, offset) => {
       shape.inheritPresentationFrom(group);
       parent.insert(shape, index+offset);
@@ -133,6 +148,7 @@ export class SvgDocument {
   clone(): SvgDocument {
     const copy = new SvgDocument(this.width, this.height);
     copy.#viewBox = [...this.#viewBox]; copy.#root = this.#root.clone();
+    copy.#svgId = this.#svgId; copy.#rootMetadata = new Map(this.#rootMetadata);
     copy.validate(); return copy;
   }
 
@@ -140,7 +156,8 @@ export class SvgDocument {
     const { id: _id, ...rootAttributes } = this.root.attributes;
     return { tag: 'svg', text: null, attributes: { xmlns: 'http://www.w3.org/2000/svg',
       width: Numeric.format(this.width), height: Numeric.format(this.height), viewBox: this.#viewBox.join(' '),
-      ...rootAttributes }, children: this.root.children.map(shape => shape.toElement()) };
+      ...Object.fromEntries(this.#rootMetadata), ...rootAttributes, ...(this.#svgId === null ? {} : {id:this.#svgId}) },
+      children: this.root.children.map(shape => shape.toElement()) };
   }
 
   validate(): void {
@@ -149,7 +166,7 @@ export class SvgDocument {
       if (visited.has(shape)) throw new Error('cyclic or shared shape in document');
       visited.add(shape);
       if (shape !== this.#root) {
-        if (index.has(shape.id)) throw new Error(`id already exists: ${shape.id}`);
+        if (index.has(shape.id) || shape.id === this.#svgId) throw new Error(`id already exists: ${shape.id}`);
         index.set(shape.id, shape);
       }
       for (const child of shape.children) {

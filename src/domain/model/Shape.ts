@@ -2,6 +2,7 @@ import type { ShapeElement } from '../contracts/ShapeElement.js';
 import type { Group } from './Group.js';
 import { Numeric } from './Numeric.js';
 import { Transform } from './Transform.js';
+import { XmlValue } from './XmlValue.js';
 
 export abstract class Shape {
   readonly #id: string;
@@ -15,6 +16,7 @@ export abstract class Shape {
   }
 
   static validateId(id: string): void {
+    XmlValue.validate(id);
     if (!id || /\s/.test(id)) throw new Error(`invalid id: ${id}`);
   }
 
@@ -54,6 +56,16 @@ export abstract class Shape {
     return (this.parent?.worldTransform() ?? new Transform()).multiply(this.#transform);
   }
 
+  relativeTransformTo(ancestor: Group): Transform {
+    if ((ancestor as Shape) === this) return new Transform();
+    let result = this.#transform, parent = this.parent;
+    while (parent && parent !== ancestor) {
+      result = parent.transform.multiply(result); parent = parent.parent;
+    }
+    if (!parent) throw new Error('relative transform requires an ancestor');
+    return result;
+  }
+
   isAncestorOf(shape: Shape): boolean {
     for (let parent = shape.parent; parent; parent = parent.parent) {
       if ((parent as Shape) === this) return true;
@@ -75,6 +87,7 @@ export abstract class Shape {
   }
 
   set(attribute: string, value: string): void {
+    XmlValue.validate(value);
     if (['fill', 'stroke', 'stroke-width'].includes(attribute)) {
       if (attribute === 'stroke-width') value = Numeric.format(Numeric.nonnegative(Numeric.parse(value)));
       this.#presentation.set(attribute, value);
@@ -86,11 +99,13 @@ export abstract class Shape {
   setTransform(transform: Transform): void { this.#transform = transform; }
 
   importPresentation(attribute: string, value: string): void {
+    XmlValue.validate(value);
     const supported = ['fill', 'stroke', 'stroke-width', 'fill-opacity', 'stroke-opacity', 'opacity',
       'font-size', 'font-family', 'font-weight', 'font-style', 'text-anchor', 'dominant-baseline',
       'stroke-linecap', 'stroke-linejoin', 'stroke-dasharray', 'stroke-dashoffset', 'fill-rule',
-      'display', 'visibility', 'vector-effect', 'paint-order', 'letter-spacing', 'word-spacing'];
-    if (!supported.includes(attribute) && !attribute.startsWith('data-') && !attribute.startsWith('aria-')) {
+      'display', 'visibility', 'vector-effect', 'paint-order', 'letter-spacing', 'word-spacing', 'color', 'xml:space'];
+    const metadata = (attribute.startsWith('data-') || attribute.startsWith('aria-')) && !attribute.includes(':');
+    if (!supported.includes(attribute) && !metadata) {
       throw new Error(`unsupported SVG attribute: ${attribute}`);
     }
     if (attribute === 'stroke-width') Numeric.nonnegative(Numeric.parse(value));
