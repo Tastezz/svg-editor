@@ -9,7 +9,7 @@
 - 保存作业原文，建立 `doc/README.md`、架构图、实施计划和验收清单。
 - 标明强制要求、后续阶段内容及未明确语义。
 - 建立本地 Git 仓库，以 `main` 为主分支，首个提交只包含规划。
-- 远程地址与截止日暂缺；开始功能开发时尽早接入远程并持续推送。
+- GitHub 私有仓库已创建并关联：[Tastezz/svg-editor](https://github.com/Tastezz/svg-editor)。截止日仍待确认；后续按阶段持续同步。
 
 完成标准：能解释每个模块的职责、依赖方向、Command 如何落地以及各阶段如何验证。
 
@@ -19,7 +19,7 @@
 
 - 建立 npm 工程与 TypeScript strict 配置，使用本机已有 Node，不全局安装工具。
 - TypeScript、Node 类型声明等放项目 devDependencies；锁定实际安装版本并提交 lockfile。
-- 接入远程前核对提交身份；当前首个提交使用 Git 自动推断的本机身份，后续按需设置仓库级 user.name/user.email，不改全局配置。
+- 已配置仓库级 GitHub 用户名和 noreply 邮箱；后续保持项目设置局部化，不改全局配置。
 - 建立 `typecheck`、`build`、`test`、`cli` 脚本；使用编译后的 JS 运行，保证类型检查有独立入口。
 - 小实验 A：XML 库能保留嵌套顺序、文本、中文、转义和缺省属性，并报告坏 XML。
 - 小实验 B：阅读样本中的 translate/scale，验证嵌套后的移动、缩放及文本外观；记录支持范围和选定方案。

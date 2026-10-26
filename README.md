@@ -32,10 +32,10 @@ npm run cli
 
 ## Git 与交付
 
-远程仓库地址：**待创建并填写**。
+远程仓库地址：[Tastezz/svg-editor](https://github.com/Tastezz/svg-editor)（私有）。
 
 按实际开发阶段持续提交和推送；验收完成后，在截止时间前创建并推送 `final` 标签。当前不创建最终标签。
 
-首个本地提交使用 Git 自动推断的本机身份；接入远程前需核对，并按需设置本仓库的提交身份，不修改全局 Git 配置。
+本仓库使用 GitHub 用户名 `Tastezz` 和 GitHub noreply 邮箱作为提交身份，仅设置仓库级配置。后续开发按 [AGENTS.md](AGENTS.md) 维护分步提交、远程同步和文档。
 
 作业材料没有给出截止时间，交付前需要补充确认。
