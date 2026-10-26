@@ -8,11 +8,11 @@
 
 - move 作用于图形所在父坐标系；叶子可通过逆线性变换更新几何，容器用平移矩阵整体移动。
 - scale 同乘几何属性与所有节点矩阵的平移分量；保留线性变换，不额外缩放 stroke-width 或 text 的 font-size。
-- 改变父容器时，使用 `newParentWorld.inverse × oldParentWorld × local` 补偿矩阵，防止因为归属变化而跳位。
+- 改变父容器时，使用相对公共祖先的矩阵补偿，防止因为归属变化而跳位；这与可逆时的 `newParentWorld.inverse × oldParentWorld × local` 等价，也避免对共享的奇异祖先求逆。
 - 导入的奇异矩阵可保留并显示；无法求逆的编辑应明确失败，不能默默产生无穷或 NaN。
 - 变换字符串的数学语法解析与图形类型分派是不同职责；图形类型仍只在 ShapeFactory 分派，不在渲染和编辑中增加 switch(tag)。
 
-当前证据：[Transform 测试](../tests/domain/Transform.test.ts) 验证顺序、逆变换和重分组补偿；[XML 实验](../tests/integration/XmlLibrary.test.ts) 验证文本、顺序、缺省属性与坏文件报错。实际图形操作、文件往返与浏览器检查留到后续阶段。
+初始证据：[Transform 测试](../tests/domain/Transform.test.ts) 与 [XML 实验](../tests/integration/XmlLibrary.test.ts)。后续已补领域模型、真实文件往返、180 次混合编辑和浏览器原图/读写后图对照，见 VALIDATION.md。
 
 参考：[SVG transform 文档](https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform)。
 
@@ -36,3 +36,12 @@
 使用已有 Node 24，项目内锁定 TypeScript、Node 类型与 xmldom；使用 Node 内置测试运行器。先编译再运行，保留独立 typecheck。未加入前端框架、全局 TypeScript 或另一套测试框架。
 
 M1 验证结果：typecheck、build 通过；5 项测试通过。npm 安装检查未报告依赖漏洞。CLI 入口目前明确提示开发中，不把脚手架冒充编辑器。
+
+后续进展：M4/M5 已接入真实 CLI 和文件适配器，当前不再使用占位入口；最终自主验收为 55 项测试。完整阶段记录见 PLAN.md。
+
+## ADR-004：复核发现的问题要落实到代码（2026-10-26）
+
+- SvgCodec 改用 ShapeReader 端口；ShapeInput 从 factories 移到 ports，修正对具体工厂的依赖。
+- XML 字符不能只靠默认解析器保证；增加 XmlValue 与严格序列化，CR 编码为字符引用。
+- undo 的成功反馈显示恢复后的属性、父级与索引，不再重复原操作后的坐标。
+- 架构图本地渲染，使用忽略目录内的临时 Java/PlantUML 工具，不更改全局 Java，也不上传私有源码。

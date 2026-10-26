@@ -14,7 +14,7 @@
 | 交互终端 | 通过 | 实际 PTY 启动 npm run cli；见 svg>，创建/移动/撤销/显示后 Ctrl-D 正常退出 |
 | SVG 浏览器显示 | 通过样例检查 | 流程图、下移节点、嵌套变换原图与读写后图 |
 | PlantUML 图 | 本地渲染并浏览器检查通过 | architecture.puml → architecture.svg；没有向在线服务上传源码 |
-| 干净检出复现 | 待最后执行 | 将从独立检出安装、构建、测试和运行示例 |
+| 干净检出复现 | 通过 | 独立临时检出执行 npm ci、typecheck、架构检查、55 项测试与 demo；工作区干净、示例逐字一致 |
 | 学生验收/教师访问/final/课程提交 | 待学生确认 | 不能由本表的开发检查代替 |
 
 ## 自动测试覆盖的关键约束
@@ -27,7 +27,9 @@
 - [SvgCodec.test.ts](../tests/integration/SvgCodec.test.ts)：缺 id 与冲突、变换、Unicode/XML 字符、样式、viewBox、往返和不支持内容。
 - [FileDocumentStore.test.ts](../tests/integration/FileDocumentStore.test.ts)：实际文件替换、不可写/不存在目录、符号链接、临时文件清理与失败保留。
 
-自动架构脚本只覆盖当前静态 import 与类声明，不代替设计评审。人工还抽查了 Shape/Group 的多态、Command 的副本文档事务、ShapeFactory 的单一类型表，以及 SvgCodec 对 ShapeReader 端口的依赖。
+自动架构脚本只覆盖当前静态 import 与类声明，不代替设计评审。另外阅读了 Shape/Group 的多态、Command 的副本文档事务、ShapeFactory 的单一类型表，以及 SvgCodec 对 ShapeReader 端口的依赖。
+
+独立检出验证提交：`0e89c6da1229a4f086388466e26b74090eb26fb1`；生产源码树：`09cdd79a692c511be513ff7f102e55e2000a7d55`。安装命令为 `npm ci --no-audit --no-fund`，其余检查均为上表命令；所有退出码为 0。后续整理只修改文档，不改变已验证源码。日志与结构化结果保存在本机 `.artifacts/clean-check.log`、`.artifacts/clean-check.json`。
 
 ## 浏览器看到的结果
 

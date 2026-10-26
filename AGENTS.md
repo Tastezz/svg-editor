@@ -9,3 +9,4 @@
 7. `origin` 为 `https://github.com/Tastezz/svg-editor.git`，当前仓库私有。验收完成且确定截止时间后才创建并推送 `final` 标签。
 8. 这些约定用于后续开发任务中的 Git 管理；没有设置后台定时运行任务。
 9. 本机 GitHub 连接需要沿用 macOS 系统代理。Git 已配置仓库级代理和 gh 凭据助手；直接调用 gh 时也需设置相应 HTTPS_PROXY。本次系统代理为 `http://127.0.0.1:7897`，网络变化时先核对 `scutil --proxy`，不盲目修改全局配置。
+10. 每个里程碑更新 `doc/STUDENT_HANDOFF.md`，并同步到 `~/Courses/高级软件开发技术/Lab1/学生待办与交接.md`；明确学生本人待做工作。课程 README 候选稿由工程报告生成，链接调整为仓库 URL。禁止把 AI 的验收冒充学生本人验收。

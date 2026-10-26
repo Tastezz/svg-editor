@@ -1,183 +1,153 @@
 # Lab1 Phase 1：SVG 编辑器（CLI）
 
-仓库地址：[https://github.com/Tastezz/svg-editor](https://github.com/Tastezz/svg-editor)（当前为私有仓库）。
+仓库：[Tastezz/svg-editor](https://github.com/Tastezz/svg-editor)（当前私有）。
 
-状态：**M0–M5 已实现；54 项测试与架构检查通过，M6 验收正在进行。不是最终提交版。**
+状态：**实现与自主验收完成，待学生复核、确认教师访问和最终提交；尚无 final 标签。**
 
-本方案依据 [作业原文](requirements/phase_cli_1.md)。具体开发步骤见 [PLAN.md](PLAN.md)，验收项目见 [ACCEPTANCE.md](ACCEPTANCE.md)。
+作业原文：[phase_cli_1.md](requirements/phase_cli_1.md)。学生后续工作见 [STUDENT_HANDOFF.md](STUDENT_HANDOFF.md)，实际检查见 [VALIDATION.md](VALIDATION.md)。
 
 ## 架构方案
 
-### 1. 模块划分
+### 1. 模块划分与职责
 
-先把图形操作做成不依赖终端、文件系统的内核，再接入 CLI 和 SVG 文件。这样同一组编辑行为以后也能由其他交互入口调用。
-
-下列目录是**计划结构**，实现时按阶段建立，不用空类和空目录假装完成。
+图形模型不依赖终端、文件系统或 XML 库。命令组织编辑行为，外部适配器负责读写。main 只组装依赖。
 
 ```text
 src/
-  main.ts                     # 组装依赖、启动程序
   domain/
-    model/                    # 文档、图形、容器、唯一 id 与树结构规则
-    contracts/                # 图形输出协议等与具体 IO 无关的接口
+    model/          Shape、五种叶子、Group、SvgDocument、快照与值对象
+    contracts/      只读图形输出描述
   application/
-    commands/                 # 一种编辑命令一个类
-    history/                  # 撤销、重做、I/O 屏障
-    factories/                # 唯一的图形类型分派入口
-    ports/                    # 存储与文档编码接口
-    EditorSession.ts          # 当前文档、读入路径与用例协调
-  cli/                        # 分词、命令分发、REPL、tree/show/help 格式
+    commands/       编辑命令：一类一文件
+    history/        历史分支、撤销重做与 I/O 屏障
+    factories/      唯一图形类型构造入口
+    ports/          文件/编码/图形读取接口和输入契约
+    EditorSession.ts
+  cli/              Tokenizer、分发、REPL、tree/show
   infrastructure/
-    svg/                      # XML 解析、模型转换、SVG 序列化
-    fs/                       # 文件读写及安全替换
-tests/
-  domain/
-  application/
-  integration/
-  fixtures/                   # 外部 SVG、坏文件、脚本输入和预期输出
-examples/                     # 最小示例与两节点流程图
-doc/
+    svg/            XML 与 SVG 数字/变换语法适配
+    fs/             原子文件读写
+  main.ts
+tests/              domain、application、cli、integration、fixtures、support
+examples/           作业会话脚本和 SVG
+scripts/            检查与演示等开发工具
 ```
 
-| 模块 | 主要对象与职责 | 明确不做的事 |
+| 模块 | 职责及实际入口 |
+| --- | --- |
+| domain | [Shape](../src/domain/model/Shape.ts) 封装公共行为；[Group](../src/domain/model/Group.ts) 管子节点；[SvgDocument](../src/domain/model/SvgDocument.ts) 管画布、树与 id 索引；[DocumentSnapshot](../src/domain/model/DocumentSnapshot.ts) 深拷贝恢复 |
+| application | [EditCommand](../src/application/commands/EditCommand.ts) 包装事务；[CommandHistory](../src/application/history/CommandHistory.ts) 管历史；[EditorSession](../src/application/EditorSession.ts) 协调用例与文档路径；[ShapeFactory](../src/application/factories/ShapeFactory.ts) 创建图形 |
+| cli | [CommandDispatcher](../src/cli/CommandDispatcher.ts) 解析命令入口；Tokenizer 处理引号；REPL 逐行执行；TreeRenderer/ShowRenderer 排版，不实现图形算法 |
+| infrastructure | [SvgCodec](../src/infrastructure/svg/SvgCodec.ts) 经端口构造/读取模型；[FileDocumentStore](../src/infrastructure/fs/FileDocumentStore.ts) 处理文件与替换 |
+| main | 创建具体工厂和适配器，注入 Session 与 REPL |
+
+PlantUML 组件图（[源文件](architecture.puml)）：
+
+![架构组件图](architecture.svg)
+
+### 2. 设计模式如何落地
+
+**Command 是编辑入口。** create/delete/move/scale/set/group/ungroup/addto/front/back 各有一个命令类。基类在副本文档上执行具体操作，通过验证后才提交结果；历史只在成功后入栈。一次 group 涉及多个节点，仍只有一个命令对象和一个撤销单元。
+
+**Composite 统一图形和容器。** Rect/Circle/Ellipse/Line/Text 与 Group 共享 Shape 接口，几何操作由对象多态完成。Group 用自身矩阵整体移动；缩放递归处理后代的几何与矩阵平移量。公共样式保存在相应元素上，不把组的 fill 强行写进每个子图形。
+
+**Memento 辅助精确撤销。** 每条成功命令保存前后模型深拷贝，undo/redo 恢复类实例、父链、id 索引和顺序。没有用 JSON 丢掉原型，也没有用反向浮点运算猜原值。代价是每条历史 O(n) 内存，适合本阶段的小文档，未来大图可改差量历史。
+
+**工厂与适配器隔离变化。** CLI create 和 SVG 导入复用同一图形工厂。SvgCodec 只依赖 ShapeReader 端口，不导入具体工厂；文件系统也通过端口注入。序列化消费对象产生的只读描述，不再复制一份 switch(tag)。这些描述是传输契约，真正可编辑的模型仍由封装字段与行为的类构成。
+
+仅保留两处命令/图形名称分派，并明确登记后续重构：
+
+| 位置 | 当前实现 | 后续待重构 |
 | --- | --- | --- |
-| domain | `SvgDocument` 管树、画布和 id 索引；`Shape` 定义统一行为；`Rect` 等叶子类与 `Group` 封装几何属性及操作；`DocumentSnapshot` 封装深拷贝与恢复 | 读文件、打印终端、理解命令字符串或 XML DOM |
-| application | `CreateCommand`、`MoveCommand` 等表达一次编辑；`CommandHistory` 管历史；`EditorSession` 协调编辑、查询和文档 I/O；`ShapeFactory` 构造图形 | 直接调用 fs/readline，处理 XML 库对象 |
-| cli | `Tokenizer` 保留引号和参数边界；`CommandDispatcher` 解析并调用用例；REPL 处理逐行输入；显示类负责排版 | 绕过模型修改字段、自己实现图形算法 |
-| infrastructure | `SvgCodec` 把 XML 与模型互转；`FileDocumentStore` 实现文件端口 | 决定 undo 策略、处理 CLI 参数 |
-| main | 创建具体对象并注入依赖 | 放业务规则 |
+| D1 CommandDispatcher | 命令名到入口的内置注册表 | 从命令提供者收集定义 |
+| D2 ShapeFactory | 六种类型的内置构造与导入 schema | 改为 ShapeProvider 提供能力 |
 
-组件图源文件：[architecture.puml](architecture.puml)。
-
-```plantuml
-@startuml
-skinparam componentStyle rectangle
-[main] --> [cli]
-[main] --> [application]
-[main] --> [infrastructure]
-[cli] --> [application]
-[cli] --> [domain]
-[application] --> [domain]
-[infrastructure] --> [application] : 实现 ports
-[infrastructure] --> [domain]
-note bottom of [domain]
-不依赖 CLI、fs、XML 库
-end note
-@enduml
-```
-
-### 2. 设计模式的选择与计划落地
-
-**Command（必选）**：每种编辑命令对应一个类。基类 `EditCommand` 统一提供 execute / undo / redo 的生命周期，具体子类只实现本次编辑的模型操作。命令对象接收已解析参数，不接触原始输入行。`CommandHistory` 只负责执行成功后的入栈、出栈与分支清理。
-
-**Composite**：`Shape` 的子类包含五种叶子图形与 `Group`。move / scale / set / delete 通过统一的对象行为完成；`Group` 用自身变换整体平移，scale 递归缩放几何和变换平移分量，每个后代恰好处理一次。容器的 fill 等公共样式保存在容器上，交给 SVG 继承，不强行改写所有子节点的显式样式。不能把模型做成公共字段数据袋，再到各处按 tag 分支。
-
-**Memento（辅助 Command）**：Phase 1 数据规模小，先保存每条成功编辑前后的内存深拷贝，undo/redo 精确恢复，而不是用反向浮点运算猜原值。快照由模型负责生成和恢复，恢复时重建父子关系与 id 索引；不能用 JSON 序列化把类原型丢掉。代价是每条历史占 O(n) 内存，暂不实现差量历史。
-
-**工厂与适配器**：图形创建与 SVG 导入复用同一个 `ShapeFactory` 类型注册表；XML 库和文件系统被适配器隔离。导入先把 DOM 转成中立的输入描述，再交工厂构造领域对象。写出与显示使用图形多态方法或领域层定义的输出协议，不增加新的 `switch(tag)`。
-
-作业仅允许的两处按名称分派，明确登记为后续待重构点：
-
-| 编号 | 位置 | Phase 1 做法 | 后续待重构方向 |
-| --- | --- | --- | --- |
-| D1 | `CommandDispatcher` | 命令名到命令解析/构造入口的内置映射 | 从命令提供者收集注册项 |
-| D2 | `ShapeFactory` | 六种类型到构造入口的内置映射；CLI create 和 SVG 导入共用 | 从 ShapeProvider 收集创建、导入等能力 |
-
-这两处之外，禁止在移动、缩放、显示和序列化中复制类型分派逻辑。本阶段不实现动态插件加载，也不实现 `box`。
+本阶段未实现动态插件或 box。SVG 数字、变换、引号属于语法解析，不承担图形类型分派。
 
 ### 3. 依赖方向规则
 
-| 发起模块 | 可以依赖 | 理由 |
+| 发起模块 | 可以依赖 | 原因 |
 | --- | --- | --- |
-| domain | domain、语言标准能力 | 图形规则不受入口和存储方式影响 |
-| application | application、domain | 组织用例与历史；对外部能力只声明端口 |
-| cli | cli、application、domain 的公开查询能力、终端标准库 | 负责交互，不承担文件持久化 |
-| infrastructure | infrastructure、application/ports、domain、fs/XML 库 | 外部实现朝内核接口适配 |
-| main | 上述模块的公开入口 | 作为唯一的依赖组装位置 |
+| domain | domain 与语言标准能力 | 模型不受交互和存储影响 |
+| application | application、domain | 组织用例，对外部能力只声明端口 |
+| cli | cli、application、domain 公开查询、终端标准库 | 负责交互，不能访问具体 fs/XML 适配器 |
+| infrastructure | infrastructure、application/ports、domain、外部库 | 外部实现朝内核接口适配 |
+| main | 各模块公开入口 | 唯一组装位置 |
 
-禁止 domain 反向导入 application/cli/infrastructure；禁止 application 导入 cli/infrastructure；禁止 cli 直接引用具体文件或 XML 适配器。跨模块不访问 private 字段，不引入循环依赖。实现后用导入关系检查，并人工抽查工厂、命令、SVG 编解码三个位置。
+禁止领域层反向依赖外层，禁止 application 导入 cli/infrastructure，禁止 cli 直接操作文件；不允许运行时循环依赖。Composite 中父子类型的相互引用不产生运行时循环。
+
+`npm run check:architecture` 检查当前静态导入、ports 边界、运行时循环、类文件名及 tag/type switch。另外逐段阅读实际职责，避免只靠“检查变绿”判断架构。
 
 ### 4. 变化点假设
 
-| 可能的变化 | 本阶段预留 | 暂不做什么及原因 |
+| 可能的变化 | 已留出的部分 | 暂不实现的部分及原因 |
 | --- | --- | --- |
-| 新增图形或 `box` | 图形多态、单一工厂、容器统一行为 | 不做插件发现与动态加载，本阶段不评分 |
-| CLI 之外的入口 | 编辑命令与模型不依赖终端 | 不做 GUI/agent 服务，先验证内核可复用 |
-| 文件格式或存储变化 | `DocumentStore` / `DocumentCodec` 端口 | 不加数据库与云存储，没有实际需求 |
-| 图形数量和历史变大 | 用快照对象封装恢复机制 | 暂不实现差量撤销，先保证复杂树操作正确 |
-| 外部 SVG 兼容范围扩大 | XML 转换集中在 svg 适配器 | 不声称支持完整 SVG 标准；未支持结构须明确报错，不能悄悄丢内容 |
+| 新增图形/box | Shape 多态、唯一工厂、统一容器语义 | 插件加载和提供者发现不属于 Phase 1 |
+| 新交互入口 | Command/Session 不依赖终端 | 没有 GUI 或 agent 服务需求 |
+| 换存储或文件编码 | DocumentStore/DocumentCodec/ShapeReader 端口 | 不加数据库与云存储 |
+| 图形/历史变大 | 快照封装在命令和模型之间 | 小文档优先保证恢复正确，暂不做差量历史 |
+| 外部 SVG 更复杂 | XML/变换语法集中在适配器 | 不声称实现完整 SVG 标准，未知内容明确失败 |
 
-### 5. 容易出错的语义
+### 5. 已确定的实现语义与边界
 
-1. **失败原子性**：在文档副本上完整验证并编辑，成功后才替换当前文档和写入历史。失败不得改变图形树、id、路径、undo/redo 或屏障状态。read 先完整解析后替换；save 先写同目录临时文件再替换目标，失败清理临时文件。
-2. **I/O 屏障**：成功 init/read/save/canvas 修改尺寸后清空两栈并锁住撤销重做，报原文规定的错误；下一条成功编辑才重新解禁。canvas 查询与 tree/show/help 不改变历史，失败命令也不解禁。
-3. **树结构**：id 全局唯一且大小写敏感；父子关系双向一致；不能把容器放入自身或后代；删除子树必须同步移除全部 id；undo 必须恢复原父级和原顺序。
-4. **几何操作**：坐标可为负、可为浮点，数字必须有限；scale 必须大于 0，并同时缩放位置和尺寸。只缩放作业规定的几何属性，不自行缩放 stroke-width。容器不能被重复递归缩放。
-5. **z-order**：SVG 按兄弟顺序绘制；front 移至兄弟列表末尾，back 移至开头，只改同级顺序。
-6. **读写**：保留层级、顺序、文本内容及受支持属性；缺省 fill/stroke 不补写黑色/none。自动补 id 前先收集所有显式 id，避免与文件后部已有 id 冲突；每次补号打印原文格式的 warning。显式 id 重复则整次读取失败。
-7. **分词**：只把去除前导空白后以 `#` 开始的整行当注释，不能把 `#4a90d9` 当行内注释；保留带空格文本、空字符串和引号状态，尾缀 `in` 必须在引号外识别。
+- id 全局唯一、区分大小写；导入补号前先收集全文件显式 id。
+- 失败编辑、失败读取/保存不改文档、路径、历史和 I/O 屏障；保存先写同目录临时文件再替换。
+- 成功 init/read/save/canvas 修改清空并锁住历史；查询与失败命令不影响历史，下一条成功编辑才解禁。
+- 保留变换矩阵；换父级时用相对矩阵补偿，不能默默丢掉 transform。
+- 默认样式保持省略；文本是子文本；XML 字符和 CR 的往返另有校验。
+- front/back 仅调整同级顺序，front 对应后绘制的末尾。
 
-### 6. 原文未完全明确的部分
-
-以下是**暂定解释**，实现前先补成小用例，并在对应阶段核实；不把这些解释写成老师已明确要求。
-
-| 问题 | 当前处理计划 |
-| --- | --- |
-| group 跨父级时新容器放哪里、相对顺序如何定义 | 同父级按原兄弟顺序收入，容器放最早被选位置；跨父级暂按最近公共祖先放置，子节点按原树遍历顺序收入。该规则需在 M2 前核实并记入修订记录 |
-| 示例中出现 transform，但未规定导入后的编辑方式 | M1 已选择保留矩阵；矩阵顺序、求逆与重分组补偿通过单元测试，M2/M5 继续验证模型与文件往返。详见 DECISIONS.md |
-| `init [w] [h]` / `canvas [w] [h]` 的单参数情况 | 确保零参数与双参数先符合原文；单参数行为在写解析器时单独确认 |
-| 未创建文档时能否 help | 暂定 help 可用；其他依赖文档的操作报 no document，便于首次启动使用 |
-| `save` 无参数的路径 | 严格先按原文使用 read 时的路径；init 后没有读入路径时要求显式文件名。显式 save 是否更新默认路径，待 M5 核实 |
-| 未支持的 SVG 元素、属性、复杂文本与变换 | 先界定兼容范围；不支持且无法无损保留时整次拒绝，不能输出看似成功但已丢内容的文档 |
-| set 的尺寸边界和空历史报错文本 | 暂定尺寸/半径/stroke-width 不为负，画布尺寸为正；空栈错误统一以 error: 开头。原文未指定的完整措辞另行固定 |
+跨父级 group、init/canvas 单参数、默认保存路径及无文档 help 的暂定解释见 [DECISIONS.md](DECISIONS.md)。它们已实现并测试，仍保留学生向课程核实的事项。支持范围和限制见 [COMPATIBILITY.md](COMPATIBILITY.md)。
 
 ## 过程记录
 
-只记录实际发生的讨论、纠正与验证，不预先编造开发经历。
+以下是实际开发中发生的判断和纠正，不能当成学生本人已经做过的工作。
 
-| 日期 | 实际发生的工作或判断 | 结果/后续验证 |
+| 阶段 | 问题或讨论 | 如何确认与处理 |
 | --- | --- | --- |
-| 2026-10-26 | 阅读 Phase 1 作业，发现 `box` 虽有完整示例，但明确属于后续阶段 | 从当前范围排除 box 和动态插件，保留工厂变化点 |
-| 2026-10-26 | 提取容易漏掉的约束：失败不改状态、I/O 后禁撤销、顶层容器禁解组、仅两处名称分派 | 纳入架构与验收清单，尚未通过代码验证 |
-| 2026-10-26 | 对照需求发现跨父级 group、transform 和默认保存路径存在解释空间 | 建立暂定解释与阶段检查点，尚未认定为最终语义 |
-| 2026-10-26 | 检查本机 Node/npm/Git，编写规划 | 固定已有 Node 版本；未安装依赖、未改动全局配置 |
-| 2026-10-26 | 创建 GitHub 私有仓库并关联 origin，配置本仓库的 GitHub noreply 提交身份 | 远程地址已填入文档；身份配置未影响其他项目 |
-| 2026-10-26 | 安装官方 GitHub CLI，在用户确认后完成首次授权；排查出命令行未沿用系统代理导致的超时 | 在仓库级配置 Git 的代理与凭据助手；未额外授予 Workflow 权限 |
-| 2026-10-26 | 比较把 transform 烘焙进坐标与保留矩阵两种方案，发现前者还要处理文字字号、描边和嵌套，容易丢失外观 | 采用保留矩阵；5 项 XML/矩阵实验通过，尚待模型与浏览器验收 |
-| 2026-10-26 | 实现图形树后，检查跨父容器分组、移入与解组的坐标、顺序与继承样式 | 用矩阵补偿保留位置；19 项模型和实验测试通过；group 暂定规则仍待学生核实 |
-| 2026-10-26 | 用递归缩放中途发生数值溢出的用例检验“先验证参数”是否足够保证原子性 | 在副本文档上执行整条 Command，成功后提交；失败不改文档、路径或历史。累计 32 项测试通过 |
-| 2026-10-26 | 真实 CLI 回放作业会话，验证导入与保存；进一步发现 XML 库默认竟接受 NUL 字符 | 补 XML 1.0 字符校验、严格序列化与 CR 引用，避免生成浏览器无法读取的文件 |
-| 2026-10-26 | 依赖自查发现 SvgCodec 曾直接依赖具体 ShapeFactory，违反 ports 规则 | 抽出 ShapeReader/ShapeInput 端口；43 个源文件架构检查通过，累计 54 项测试通过 |
+| 需求 | box 虽有完整示例，但明确是后续阶段 | 从本阶段排除，create box 保持 unknown shape type |
+| 工具链 | 需要保证本地可复现，避免依赖全局 TypeScript | 使用已有 Node 24、项目依赖与锁文件，先编译后运行 |
+| SVG 变换 | 直接把 transform 烘焙进坐标还会涉及字形、描边与样式继承 | 先做矩阵/XML 实验，选择保留矩阵；浏览器对照样例验证 |
+| 图形树 | 仅改变父引用会使图形在带变换的容器中跳位 | 加相对矩阵补偿，测试跨父级 group/addto/ungroup；共享奇异祖先也不必求世界逆矩阵 |
+| 原子性 | 只预检参数无法覆盖递归过程中途溢出 | Command 在副本中执行；溢出测试确认原文档与历史完全不变 |
+| 依赖自查 | SvgCodec 最初直接依赖具体 ShapeFactory，违反 ports 规则 | 抽出 ShapeReader 与中立输入契约，自动和人工复查依赖 |
+| XML 边界 | XML 库默认接受 NUL，库自身 round-trip 成功不代表浏览器可读 | 依据 XML 1.0 补字符校验、严格序列化和 CR 引用，加入回归测试 |
+| 终端试用 | undo 状态已恢复，反馈却还显示旧操作后的坐标 | 改为显示恢复后的属性、父级和索引，并补断言 |
+| 完整验收 | 单测不足以证明用户入口可用 | 真实进程回放两段作业会话，真实文件读写，实际 PTY、浏览器及独立检出复现 |
 
-后续每条记录应写清：AI/人工提出的建议 → 发现的问题 → 如何确认 → 实际修改 → 用例或提交证据。
+以上步骤有分步 Git 提交，未把成品一次性提交。远程同步由本机 GitHub CLI 完成，仓库级配置未修改其他项目的 Git 身份。
 
 ## 一致性自查
 
-domain、application、cli、infrastructure 与 main 已落地。自动依赖与文件结构检查通过，完整文档与可见效果仍在做最后核查。
+**模块划分是否一致？** 生产代码按 domain/application/cli/infrastructure/main 落地。相对初始草案，增加了 `tests/cli` 与 `tests/support` 以放分词/REPL 测试和端口替身；增加 scripts 放开发检查工具。ShapeInput 最初放在 factories，依赖复核后移到 ports。这些修订已记录。
 
-| 问题 | 当前结论 | 完成时应补的证据 |
-| --- | --- | --- |
-| 实际目录与模块方案一致吗？ | 已建立领域模型、输出契约与对应测试，其余随实现展开 | 目录对照、差异说明及修订记录 |
-| 依赖规则被违反了吗？ | 领域层仅依赖领域层；完整自动检查待后续实现 | 导入检查结果，命令/工厂/编解码抽查路径 |
-| 一类一文件、封装与多态落地了吗？ | 领域实体的私有字段、多态和一类一文件已实现 | 代表类路径，完整分派检查待后续补充 |
+**依赖方向是否违反？** 当前 43 个源文件检查通过。抽样看 CreateCommand 只调用模型/工厂；Shape/Group 不依赖终端和 XML DOM；SvgCodec 只导入 application/ports；具体对象都在 main 组装。当前未发现违反已声明方向的依赖。
+
+检查脚本覆盖静态导入与结构规则，不能自动证明所有设计合理；还另外检查了两处分派及类职责。文件中可编辑实体是有行为的类，传输接口不承担领域操作。
 
 ## 质量保证手段
 
-完整清单见 [ACCEPTANCE.md](ACCEPTANCE.md)。以下是计划，不是已通过的测试结果。
+实际验证记录见 [VALIDATION.md](VALIDATION.md)，逐项证据见 [ACCEPTANCE.md](ACCEPTANCE.md)。
 
-1. 领域测试：图形运算、树结构、全局 id、父子关系和顺序。
-2. 用例测试：每条编辑都是一个 undo 单元；失败保持状态；I/O 屏障和 redo 分支符合要求。
-3. CLI 集成测试：真实 stdin/stdout 回放作业第 6 节、第 6.1 节版本 A；检查前缀、警告、文本和颜色解析。
-4. 文件测试：导入缺 id/重复 id/坏 XML；save → read 后比较模型语义；使用临时目录验证读写失败。
-5. 人工预览：浏览器检查生成的最小图与流程图，尤其关注嵌套、文本、颜色和前后层级。
-6. 架构检查：严格类型检查、模块依赖、一类一文件及两处分派限制。
-7. 最后从干净检出执行安装、构建、测试和示例，补上真实命令结果，再创建 `final`。
+1. **55 项自动测试**覆盖六种图形、树结构、全部编辑的撤销粒度、失败原子性、redo 分支、I/O 屏障、错误措辞与文件往返。
+2. **180 次确定性混合编辑**逐步验证不变量与 SVG 往返，再完整 undo/redo，补充单条命令用例。
+3. **真实 CLI 与文件系统**回放作业第 6 节和 6.1 节版本 A；文件失败场景检查原文件、当前文档和历史。
+4. **浏览器可见效果**检查流程图、容器移动、嵌套变换前后和本地渲染的 PlantUML 图。
+5. **独立干净检出**运行安装、类型检查、架构检查、测试和 demo；生成示例与提交的 SVG 一致，检出工作区仍干净。
 
-当前验证状态：**npm run typecheck、npm run check:architecture、npm test 通过（54 项）；真实 CLI、真实文件读写和作业会话均已验证，SVG 浏览器预览尚在进行。**
+这说明当前实现具有可复现的 Phase 1 功能依据，不代表支持任意 SVG。学生验收、教师访问、截止时间和 final 标签尚待完成。
 
-## 技术参考
+### 复现命令
 
-- [TypeScript strict 配置](https://www.typescriptlang.org/tsconfig/strict.html)：计划启用严格类型检查。
-- [Node.js 24 测试运行器](https://nodejs.org/docs/latest-v24.x/api/test.html)：计划用 node:test 与 node:assert/strict。
-- [npm package-lock.json](https://docs.npmjs.com/cli/v11/configuring-npm/package-lock-json/)：提交锁文件以记录依赖树。
-- [xmldom 官方仓库](https://github.com/xmldom/xmldom)：XML DOM 解析与序列化候选；M1 做小样验证后锁定依赖版本。
+```sh
+npm ci
+npm run typecheck
+npm run check:architecture
+npm test
+npm run demo
+npm run cli
+```
+
+架构图由本地 PlantUML 1.2026.9 渲染，已提交 SVG。核心编辑器只依赖 Node；重新渲染图时可设置本地 `PLANTUML_JAR`、`JAVA_BIN` 后运行 `npm run render:architecture`，不需要上传源码。
+
+技术依据：[TypeScript strict](https://www.typescriptlang.org/tsconfig/strict.html)、[Node 24 测试运行器](https://nodejs.org/docs/latest-v24.x/api/test.html)、[xmldom](https://github.com/xmldom/xmldom)、[XML 1.0 字符规则](https://www.w3.org/TR/xml/#charsets)。
