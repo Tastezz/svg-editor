@@ -1,0 +1,35 @@
+@startuml
+title Lab1 Phase 1 SVG Editor - Planned Architecture
+skinparam componentStyle rectangle
+left to right direction
+
+component "main\n依赖组装" as Main
+component "cli\nREPL / Tokenizer / Dispatcher\nTree / Show / Help" as Cli
+component "application\nEditorSession / Commands\nHistory / ShapeFactory / Ports" as Application
+component "domain\nSvgDocument / Shape / Group\nLeaf Shapes / Snapshot / Contracts" as Domain
+component "infrastructure\nSVG Codec / File Store" as Infrastructure
+
+Main --> Cli
+Main --> Application
+Main --> Infrastructure
+Cli --> Application
+Cli --> Domain : 公开查询能力
+Application --> Domain
+Infrastructure --> Application : 实现 ports
+Infrastructure --> Domain
+
+note bottom of Domain
+不依赖 CLI、文件系统和 XML 库
+几何行为使用多态，树结构遵守 Composite
+end note
+
+note bottom of Application
+Command 必选；快照辅助撤销
+D2 ShapeFactory 为后续插件化待重构点
+end note
+
+note bottom of Cli
+D1 CommandDispatcher 为后续注册式扩展待重构点
+CLI 不直接修改图形字段
+end note
+@enduml
