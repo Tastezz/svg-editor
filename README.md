@@ -1,50 +1,46 @@
 # SVG Editor
 
-高级软件开发技术 · Lab1 Phase 1：用 TypeScript 和面向对象设计实现 SVG 命令行编辑器。
+用 TypeScript 和面向对象设计实现 SVG 命令行编辑器。
 
-**当前阶段：M0–M6 已完成，55 项测试、架构检查、浏览器预览及干净检出复现通过。等待学生复核与最终交付信息，尚未创建 final 标签。**
+支持 REPL、六种内置图形（rect / circle / ellipse / line / text / g）、图形树编辑、undo/redo 和 SVG 文件读写。编辑操作采用 Command，叶子图形与容器通过 Composite 统一处理。
 
-- 作业原文：[phase_cli_1.md](doc/requirements/phase_cli_1.md)
-- 作业要求的提交文档：[doc/README.md](doc/README.md)
-- 开发顺序与各阶段完成标准：[doc/PLAN.md](doc/PLAN.md)
-- 功能验收清单：[doc/ACCEPTANCE.md](doc/ACCEPTANCE.md)
-- PlantUML 架构图：[doc/architecture.puml](doc/architecture.puml)
-- 学生待办与交接：[doc/STUDENT_HANDOFF.md](doc/STUDENT_HANDOFF.md)
-- 实施决策与修订：[doc/DECISIONS.md](doc/DECISIONS.md)
-- 验证记录：[doc/VALIDATION.md](doc/VALIDATION.md)
+## 安装与运行
 
-## 项目范围
-
-实现 REPL、六种内置图形（rect / circle / ellipse / line / text / g）、图形树编辑、undo/redo，以及 SVG 文件读写。必须使用 Command 模式，叶子图形与容器采用 Composite 语义。
-
-`box`、动态插件、GUI 和鼠标交互留到后续阶段。
-
-## 开发环境
-
-2026-10-26 本机检查结果：Node.js `v24.20.0`、npm `11.19.0`、Git 可用。`.node-version` 固定当前已有的 Node 版本，不修改全局环境。
-
-项目本地依赖已锁定在 `package-lock.json`：TypeScript 7.0.2、Node 24 类型、xmldom 0.9.12。测试使用 Node 自带运行器。安装和检查入口：
+使用 Node.js 24，具体版本见 `.node-version`。npm 版本为 11.19.0，项目依赖由 `package-lock.json` 锁定。
 
 ```sh
 npm ci
-npm run typecheck
-npm run check:architecture
-npm run build
-npm test
 npm run cli
+```
+
+进入 `svg>` 交互环境后，输入 `help` 查看语法，Ctrl-D 退出。生成两节点流程图示例：
+
+```sh
 npm run demo
 ```
 
-`npm run cli` 进入 `svg>` 交互环境，输入 `help` 查看语法，Ctrl-D 退出。也可先运行 `mkdir -p .artifacts`，再回放脚本：`node dist/src/main.js < examples/flowchart.commands`。`npm run demo` 会准备输出目录并生成 `.artifacts/flowchart.svg`。
+输出文件为 `.artifacts/flowchart.svg`，可用浏览器查看。示例命令和 SVG 位于 [examples/](examples/)。完整操作会话见 [使用指南](doc/QUICKSTART.md)。
 
-正常结果与导入警告输出到 stdout，错误以 `error:` 开头输出到 stderr；单条错误不终止会话。外部 SVG 的支持范围与暂定语义见 [COMPATIBILITY.md](doc/COMPATIBILITY.md)。
+正常结果与导入警告输出到 stdout；错误以 `error:` 开头输出到 stderr，单条错误不终止会话。命令约定与外部 SVG 支持范围见 [COMPATIBILITY.md](doc/COMPATIBILITY.md)。
 
-## Git 与交付
+## 验证
 
-远程仓库地址：[Tastezz/svg-editor](https://github.com/Tastezz/svg-editor)（私有）。
+```sh
+npm run typecheck
+npm run check:architecture
+npm test
+```
 
-按实际开发阶段持续提交和推送；验收完成后，在截止时间前创建并推送 `final` 标签。当前不创建最终标签。
+已通过 55 项自动测试、43 个源文件的架构检查、交互终端与浏览器检查，以及独立干净检出复现。检查日期、覆盖范围和结果见 [验证记录](doc/VALIDATION.md)。
 
-本仓库使用 GitHub 用户名 `Tastezz` 和 GitHub noreply 邮箱作为提交身份，仅设置仓库级配置。后续开发按 [AGENTS.md](AGENTS.md) 维护分步提交、远程同步和文档。
+## 项目文档
 
-作业材料没有给出截止时间，交付前需要补充确认。
+- [架构与实现报告](doc/README.md)
+- [使用指南](doc/QUICKSTART.md)
+- [实施路线](doc/PLAN.md)
+- [功能验收清单](doc/ACCEPTANCE.md)
+- [实施决策与修订](doc/DECISIONS.md)
+- [PlantUML 架构图](doc/architecture.puml)
+- [原始需求](doc/requirements/phase_cli_1.md)
+
+仓库：[Tastezz/svg-editor](https://github.com/Tastezz/svg-editor)。

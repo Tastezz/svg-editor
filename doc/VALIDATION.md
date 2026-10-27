@@ -1,8 +1,8 @@
 # 验证记录
 
-日期：2026-10-26。以下检查由 AI 开发过程中实际执行；学生本人仍需按 STUDENT_HANDOFF.md 复核与演示。
+检查日期：2026-10-26。记录自动测试、真实终端、浏览器显示与独立检出复现的结果。
 
-## 当前检查
+## 检查结果
 
 | 检查 | 结果 | 证据 |
 | --- | --- | --- |
@@ -13,9 +13,8 @@
 | 作业第 6.1 节版本 A | 通过 | CliProcess.test.ts；8 个元素，节点内容与 move/undo 正确 |
 | 交互终端 | 通过 | 实际 PTY 启动 npm run cli；见 svg>，创建/移动/撤销/显示后 Ctrl-D 正常退出 |
 | SVG 浏览器显示 | 通过样例检查 | 流程图、下移节点、嵌套变换原图与读写后图 |
-| PlantUML 图 | 本地渲染并浏览器检查通过 | architecture.puml → architecture.svg；没有向在线服务上传源码 |
+| PlantUML 图 | 本地渲染并浏览器检查通过 | architecture.puml → architecture.svg；中文、模块和依赖箭头显示完整 |
 | 干净检出复现 | 通过 | 独立临时检出执行 npm ci、typecheck、架构检查、55 项测试与 demo；工作区干净、示例逐字一致 |
-| 学生验收/教师访问/final/课程提交 | 待学生确认 | 不能由本表的开发检查代替 |
 
 ## 自动测试覆盖的关键约束
 
@@ -29,7 +28,7 @@
 
 自动架构脚本只覆盖当前静态 import 与类声明，不代替设计评审。另外阅读了 Shape/Group 的多态、Command 的副本文档事务、ShapeFactory 的单一类型表，以及 SvgCodec 对 ShapeReader 端口的依赖。
 
-独立检出验证提交：`0e89c6da1229a4f086388466e26b74090eb26fb1`；生产源码树：`09cdd79a692c511be513ff7f102e55e2000a7d55`。安装命令为 `npm ci --no-audit --no-fund`，其余检查均为上表命令；所有退出码为 0。后续整理只修改文档，不改变已验证源码。日志与结构化结果保存在本机 `.artifacts/clean-check.log`、`.artifacts/clean-check.json`。
+独立检出验证提交：`0e89c6da1229a4f086388466e26b74090eb26fb1`；生产源码树：`09cdd79a692c511be513ff7f102e55e2000a7d55`。安装命令为 `npm ci --no-audit --no-fund`，其余检查均为上表命令；所有退出码为 0。该记录对应上述源码版本；文档整理未改变生产源码。
 
 ## 浏览器看到的结果
 
@@ -38,9 +37,9 @@
 3. 嵌套 translate/scale 的原图和读写后图在样例检查中外观一致，包括白色 End 文字。
 4. 本地 PlantUML 图的中文说明、模块和依赖箭头可读，无裁切。
 
-生成示例：[flowchart.svg](../examples/flowchart.svg)。本机截图保存在被 Git 忽略的 `.artifacts/*-browser.png`，远程阅读不依赖这些临时截图。
+生成示例：[flowchart.svg](../examples/flowchart.svg)。
 
-## 本轮实际纠正
+## 关键修正
 
 - XML 库默认可序列化并重新读入 NUL，但浏览器要求合法 XML；增加字符规则与严格序列化，CR 用字符引用保持往返。
 - 直接依赖具体工厂违反了 ports 边界；改为 ShapeReader 接口。

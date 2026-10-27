@@ -1,12 +1,17 @@
 # 项目工作约定
 
-1. 用最规范高效的方式管理本机开发环境。代码项目位于 `~/Projects`，数据集位于 `~/Data`；课程原始资料、提交材料位于 `~/Courses`，研究资料位于 `~/Research`。
-2. 本项目位于 `~/Projects/svg-editor`。作业要求随仓库提交的工程文档保留在 `doc/`，课程原文保留在 `~/Courses/高级软件开发技术/Lab1`。
-3. 开发前阅读 `doc/README.md`、`doc/PLAN.md` 和 `doc/ACCEPTANCE.md`。只推进当前授权的任务，功能完成情况按实际验证结果记录。
-4. 按作业要求使用 TypeScript 面向对象、一类一文件、封装和多态。编辑使用 Command，容器使用 Composite；名称分派仅位于 CommandDispatcher 与 ShapeFactory。
-5. 使用已有 Node 与项目内 npm 依赖，提交 package-lock.json。Git 身份与项目设置优先使用仓库级配置，避免修改全局环境。
-6. 每个有实际进展的开发阶段在检查通过后提交，并同步到 `origin`；提交说明反映真实改动。先检查工作区，保留用户已有修改，不混入其他项目或数据集。
-7. `origin` 为 `https://github.com/Tastezz/svg-editor.git`，当前仓库私有。验收完成且确定截止时间后才创建并推送 `final` 标签。
-8. 这些约定用于后续开发任务中的 Git 管理；没有设置后台定时运行任务。
-9. 本机 GitHub 连接需要沿用 macOS 系统代理。Git 已配置仓库级代理和 gh 凭据助手；直接调用 gh 时也需设置相应 HTTPS_PROXY。本次系统代理为 `http://127.0.0.1:7897`，网络变化时先核对 `scutil --proxy`，不盲目修改全局配置。
-10. 每个里程碑更新 `doc/STUDENT_HANDOFF.md`，并同步到 `~/Courses/高级软件开发技术/Lab1/学生待办与交接.md`；明确学生本人待做工作。课程 README 候选稿由工程报告生成，链接调整为仓库 URL。禁止把 AI 的验收冒充学生本人验收。
+## 发布约定
+
+2026-10-27 已确认文档定稿，授权将本次定稿提交推送到 `origin/main`，并创建、推送 `final` 标签。保留分步提交历史，不强制推送，不覆盖已有 `final` 标签。
+
+## 开发约定
+
+1. 规范管理本机环境。代码项目放在 `~/Projects`，数据集放在 `~/Data`；课程资料放在 `~/Courses`，研究资料放在 `~/Research`。
+2. 本项目位于 `~/Projects/svg-editor`，工程文档位于 `doc/`，原始需求和课程材料位于 `~/Courses/高级软件开发技术/Lab1`。保留原始需求，不修改其内容。
+3. 开发前阅读 `doc/README.md`、`doc/PLAN.md` 和 `doc/ACCEPTANCE.md`。修改前检查工作区，保留已有手工修改，只处理当前授权范围。
+4. 使用 TypeScript 面向对象、一类一文件、封装和多态。编辑使用 Command，容器使用 Composite；名称分派仅位于 CommandDispatcher 与 ShapeFactory。
+5. 使用已有 Node 和项目内 npm 依赖，提交 package-lock.json。Git 身份与项目设置使用仓库级配置，避免修改全局环境。
+6. 开发阶段检查通过后保留分步提交，提交说明反映实际改动；远程同步必须遵守上方发布约定。仅将实际执行的检查记录为通过。
+7. `origin` 为 `https://github.com/Tastezz/svg-editor.git`，仓库公开。当前未设置后台定时同步任务。
+8. 本机 GitHub 连接沿用系统代理。Git 已配置仓库级代理和 gh 凭据助手；直接调用 gh 时使用相应 HTTPS_PROXY。当前代理为 `http://127.0.0.1:7897`，网络变化时先核对 `scutil --proxy`。
+9. 实现变更时同步更新报告、使用指南、决策与验证依据。课程目录 README.md 与使用指南由工程文档生成，链接调整为仓库 URL；同步前检查并保留副本中的独立修改。

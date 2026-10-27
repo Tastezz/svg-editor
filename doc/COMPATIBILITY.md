@@ -2,7 +2,7 @@
 
 ## Phase 1 的边界
 
-内置 rect、circle、ellipse、line、text、g 六种类型，全部按唯一、大小写敏感的 id 寻址。`box`、动态插件、GUI 不属于本阶段。
+内置 rect、circle、ellipse、line、text、g 六种类型，全部按唯一、大小写敏感的 id 寻址。
 
 create/group 必须显式给 id；导入时缺 id 才补号，并预先避开整个文件的显式 id。根 svg 的既有 id 会保留并参与重名检查，但不作为可编辑图形。
 
@@ -35,4 +35,4 @@ create/group 必须显式给 id；导入时缺 id 才补号，并预先避开整
 - 错误输出至 stderr，一行一个 error:；正常结果和导入警告至 stdout。单条错误后继续处理下一行，EOF 正常结束会话。
 - 保存先在目标目录写临时文件再替换；失败保留原文件。已有符号链接跟随到真实目标，保留链接本身。
 
-init/canvas 单参数、跨父级 group 与默认保存路径属于原文未完全明确的部分，以上规则是当前实现选择，学生仍应按课程反馈确认。
+init/canvas 单参数、跨父级 group 与默认保存路径的实现依据见 [DECISIONS.md](DECISIONS.md)。

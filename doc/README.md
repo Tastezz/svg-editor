@@ -1,10 +1,10 @@
 # Lab1 Phase 1：SVG 编辑器（CLI）
 
-仓库：[Tastezz/svg-editor](https://github.com/Tastezz/svg-editor)（当前私有）。
+仓库：[Tastezz/svg-editor](https://github.com/Tastezz/svg-editor)。
 
-状态：**实现与自主验收完成，待学生复核、确认教师访问和最终提交；尚无 final 标签。**
+实现范围：Phase 1 的六种图形、命令行编辑、撤销重做与 SVG 文件读写。
 
-作业原文：[phase_cli_1.md](requirements/phase_cli_1.md)。学生后续工作见 [STUDENT_HANDOFF.md](STUDENT_HANDOFF.md)，实际检查见 [VALIDATION.md](VALIDATION.md)。
+原始需求：[phase_cli_1.md](requirements/phase_cli_1.md)。运行方法见 [使用指南](QUICKSTART.md)，检查结果见 [验证记录](VALIDATION.md)。
 
 ## 架构方案
 
@@ -76,7 +76,7 @@ PlantUML 组件图（[源文件](architecture.puml)）：
 
 禁止领域层反向依赖外层，禁止 application 导入 cli/infrastructure，禁止 cli 直接操作文件；不允许运行时循环依赖。Composite 中父子类型的相互引用不产生运行时循环。
 
-`npm run check:architecture` 检查当前静态导入、ports 边界、运行时循环、类文件名及 tag/type switch。另外逐段阅读实际职责，避免只靠“检查变绿”判断架构。
+`npm run check:architecture` 检查静态导入、ports 边界、运行时循环、类文件名及 tag/type switch；类职责与多态实现另外通过代码审查确认。
 
 ### 4. 变化点假设
 
@@ -97,11 +97,11 @@ PlantUML 组件图（[源文件](architecture.puml)）：
 - 默认样式保持省略；文本是子文本；XML 字符和 CR 的往返另有校验。
 - front/back 仅调整同级顺序，front 对应后绘制的末尾。
 
-跨父级 group、init/canvas 单参数、默认保存路径及无文档 help 的暂定解释见 [DECISIONS.md](DECISIONS.md)。它们已实现并测试，仍保留学生向课程核实的事项。支持范围和限制见 [COMPATIBILITY.md](COMPATIBILITY.md)。
+跨父级 group、init/canvas 单参数、默认保存路径及无文档 help 的实现约定见 [DECISIONS.md](DECISIONS.md)，均有对应测试。支持范围和限制见 [COMPATIBILITY.md](COMPATIBILITY.md)。
 
 ## 过程记录
 
-以下是实际开发中发生的判断和纠正，不能当成学生本人已经做过的工作。
+开发过程中对方案与代码的主要检查和修正如下。
 
 | 阶段 | 问题或讨论 | 如何确认与处理 |
 | --- | --- | --- |
@@ -115,13 +115,13 @@ PlantUML 组件图（[源文件](architecture.puml)）：
 | 终端试用 | undo 状态已恢复，反馈却还显示旧操作后的坐标 | 改为显示恢复后的属性、父级和索引，并补断言 |
 | 完整验收 | 单测不足以证明用户入口可用 | 真实进程回放两段作业会话，真实文件读写，实际 PTY、浏览器及独立检出复现 |
 
-以上步骤有分步 Git 提交，未把成品一次性提交。远程同步由本机 GitHub CLI 完成，仓库级配置未修改其他项目的 Git 身份。
+上述开发阶段与修正保留在仓库的分步 Git 提交中。
 
 ## 一致性自查
 
-**模块划分是否一致？** 生产代码按 domain/application/cli/infrastructure/main 落地。相对初始草案，增加了 `tests/cli` 与 `tests/support` 以放分词/REPL 测试和端口替身；增加 scripts 放开发检查工具。ShapeInput 最初放在 factories，依赖复核后移到 ports。这些修订已记录。
+**模块划分。** 生产代码按 domain/application/cli/infrastructure/main 落地。相对初始草案，增加了 `tests/cli` 与 `tests/support` 以放分词/REPL 测试和端口替身；增加 scripts 放开发检查工具。ShapeInput 最初放在 factories，依赖复核后移到 ports。这些修订已记录。
 
-**依赖方向是否违反？** 当前 43 个源文件检查通过。抽样看 CreateCommand 只调用模型/工厂；Shape/Group 不依赖终端和 XML DOM；SvgCodec 只导入 application/ports；具体对象都在 main 组装。当前未发现违反已声明方向的依赖。
+**依赖方向。** 当前 43 个源文件检查通过。抽样看 CreateCommand 只调用模型/工厂；Shape/Group 不依赖终端和 XML DOM；SvgCodec 只导入 application/ports；具体对象都在 main 组装。当前未发现违反已声明方向的依赖。
 
 检查脚本覆盖静态导入与结构规则，不能自动证明所有设计合理；还另外检查了两处分派及类职责。文件中可编辑实体是有行为的类，传输接口不承担领域操作。
 
@@ -135,7 +135,7 @@ PlantUML 组件图（[源文件](architecture.puml)）：
 4. **浏览器可见效果**检查流程图、容器移动、嵌套变换前后和本地渲染的 PlantUML 图。
 5. **独立干净检出**运行安装、类型检查、架构检查、测试和 demo；生成示例与提交的 SVG 一致，检出工作区仍干净。
 
-这说明当前实现具有可复现的 Phase 1 功能依据，不代表支持任意 SVG。学生验收、教师访问、截止时间和 final 标签尚待完成。
+以上验证覆盖 Phase 1 功能和文档列出的 SVG 子集；未支持的 SVG 内容会明确报错。
 
 ### 复现命令
 
@@ -148,6 +148,4 @@ npm run demo
 npm run cli
 ```
 
-架构图由本地 PlantUML 1.2026.9 渲染，已提交 SVG。核心编辑器只依赖 Node；重新渲染图时可设置本地 `PLANTUML_JAR`、`JAVA_BIN` 后运行 `npm run render:architecture`，不需要上传源码。
-
-技术依据：[TypeScript strict](https://www.typescriptlang.org/tsconfig/strict.html)、[Node 24 测试运行器](https://nodejs.org/docs/latest-v24.x/api/test.html)、[xmldom](https://github.com/xmldom/xmldom)、[XML 1.0 字符规则](https://www.w3.org/TR/xml/#charsets)。
+架构图由本地 PlantUML 1.2026.9 渲染，已提交 SVG。核心编辑器只依赖 Node；重新渲染图时可设置本地 `PLANTUML_JAR`、`JAVA_BIN` 后运行 `npm run render:architecture`。

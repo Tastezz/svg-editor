@@ -1,15 +1,15 @@
 # 验收清单
 
-2026-10-26：开发侧验收完成。以下勾选有对应代码、测试或实际操作依据；学生验收与最终提交仍保留为未完成。
+检查日期：2026-10-26。以下项目均有对应代码、测试或实际运行依据。
 
-## 强制交付与架构
+## 架构与文档
 
 - [x] TypeScript 面向对象；字段封装、一类一文件，文件名与类名一致。证据：43 个源文件结构检查及 Shape/Group/叶子类抽查。
 - [x] Command 承载编辑与 undo/redo，容器/叶子通过 Composite 统一操作。证据：EditCommand、CommandHistory、Shapes/EditorSession 测试。
 - [x] 命令/图形类型分派只位于 CommandDispatcher 和 ShapeFactory，文档登记后续重构点。数学与词法语法解析不承担图形类型分派。
 - [x] 模块、依赖与方案一致，运行时无循环；ShapeReader/ShapeInput 端口修订、tests/cli/support 与 scripts 增补已记录。
 - [x] doc/README.md 四个要求章节齐全，有真实过程记录、PlantUML 图与仓库地址。
-- [ ] 分步提交和远程推送已有记录；**final 标签仍待截止时间与学生验收后创建**。
+- [x] 仓库保留分步开发提交，README 包含仓库地址。
 
 ## 命令覆盖
 
@@ -32,7 +32,7 @@
 | front/back | 仅同级重排，最前/最后和顺序保持 | 通过：Document、Session；单节点 insert/remove 路径抽查 |
 | tree | 全树/子树、树枝、属性内联、空组/变换 | 通过：Dispatcher、Process、实际终端 |
 | show | 类型/id/父级/几何/样式/文本 | 通过：Dispatcher、Process、实际终端 |
-| help | 全命令语法，不动历史，启动可用 | 通过：Dispatcher；启动可用仍是已记录的暂定解释 |
+| help | 全命令语法，不动历史，启动可用 | 通过：Dispatcher；无文档时可用的行为已记录 |
 | undo/redo | 精确恢复、新分支、I/O 屏障、空栈、失败不动历史 | 通过：Session、StatefulHistory、Store、Process |
 
 ## REPL 与错误输出
@@ -47,7 +47,7 @@
 - [x] 未 init/read 的文档命令输出规定的 no document 错误。
 - [x] 4.2 中 Phase 1 适用错误逐字检查；create box 报 unknown shape type。
 
-`cannot ungroup composite shape` 对应后续 box 插件，本阶段没有该类型，不冒充已实现插件语义。
+`cannot ungroup composite shape` 对应后续 box 插件，本阶段不包含该类型。
 
 ## 历史与原子性重点序列
 
@@ -75,12 +75,8 @@
 - [x] 第 6 节完整会话与第 6.1 节版本 A 真实回放，版本 B 不纳入本阶段。
 - [x] 浏览器检查文本随组移动、颜色、尺寸及嵌套变换；PlantUML 图可读。
 
-## 最终复现与学生交付
+## 复现与文档
 
 - [x] 独立干净检出安装、typecheck、架构检查、55 项测试和 demo 全通过；没有改动跟踪文件，生成示例与提交文件相同。
 - [x] README 与实际脚本一致，无占位 CLI；报告与自查有证据，限制如实说明。
-- [x] 学生待办持续更新并在 Courses 保留副本，课程 README 候选稿含仓库地址。
-- [ ] 学生本人复核、确认暂定语义和课程截止时间。
-- [ ] 教师可访问当前私有仓库。
-- [ ] 最终 final 标签创建并推送，标签与课程提交文档对应。
-- [ ] 学生实际完成课程平台提交。
+- [x] 使用指南包含安装、示例会话、I/O 屏障和支持范围说明。

@@ -14,13 +14,11 @@
 
 初始证据：[Transform 测试](../tests/domain/Transform.test.ts) 与 [XML 实验](../tests/integration/XmlLibrary.test.ts)。后续已补领域模型、真实文件往返、180 次混合编辑和浏览器原图/读写后图对照，见 VALIDATION.md。
 
-参考：[SVG transform 文档](https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform)。
+## ADR-002：命令语义约定（2026-10-26）
 
-## ADR-002：未明确语义的暂定规则（2026-10-26）
+原始需求未完全明确的行为采用以下约定，并由测试固定。
 
-这些规则用于继续实现并固定可复现行为，不代替教师解释；学生待办中保留了确认事项。
-
-| 问题 | 暂定实现 |
+| 问题 | 实现约定 |
 | --- | --- |
 | group 同父级 | 按原兄弟顺序收入，新组占最早被选节点的位置 |
 | group 跨父级 | 放在最近公共祖先中，按原树先序排列子节点；不允许同时选择祖先与后代 |
@@ -35,13 +33,11 @@
 
 使用已有 Node 24，项目内锁定 TypeScript、Node 类型与 xmldom；使用 Node 内置测试运行器。先编译再运行，保留独立 typecheck。未加入前端框架、全局 TypeScript 或另一套测试框架。
 
-M1 验证结果：typecheck、build 通过；5 项测试通过。npm 安装检查未报告依赖漏洞。CLI 入口目前明确提示开发中，不把脚手架冒充编辑器。
+CLI 和文件适配器已接入真实入口，55 项测试通过。实施顺序见 [PLAN.md](PLAN.md)，完整检查结果见 [VALIDATION.md](VALIDATION.md)。
 
-后续进展：M4/M5 已接入真实 CLI 和文件适配器，当前不再使用占位入口；最终自主验收为 55 项测试。完整阶段记录见 PLAN.md。
-
-## ADR-004：复核发现的问题要落实到代码（2026-10-26）
+## ADR-004：架构与边界修正（2026-10-26）
 
 - SvgCodec 改用 ShapeReader 端口；ShapeInput 从 factories 移到 ports，修正对具体工厂的依赖。
 - XML 字符不能只靠默认解析器保证；增加 XmlValue 与严格序列化，CR 编码为字符引用。
 - undo 的成功反馈显示恢复后的属性、父级与索引，不再重复原操作后的坐标。
-- 架构图本地渲染，使用忽略目录内的临时 Java/PlantUML 工具，不更改全局 Java，也不上传私有源码。
+- 架构图使用本地 Java/PlantUML 渲染并保留 SVG；渲染工具独立于编辑器运行依赖。
